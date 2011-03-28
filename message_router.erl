@@ -3,27 +3,12 @@
 -compile(export_all).
 
 start () ->
-  global:trans({?SERVER, ?SERVER}, fun
-      () ->
-        case global:whereis_name(?SERVER) of
-          undefined ->
-            Pid = spawn(message_router, route_messages, [dict:new()]),
-            global:register_name(?SERVER, Pid);
-          _ ->
-            ok
-        end
-    end).
+  server_util:start(?SERVER, {message_router, route_messages, [dict:new()]}),
+  message_store:start().
 
 stop () ->
-  global:trans({?SERVER, ?SERVER}, fun
-    () ->
-      case global:whereis_name(?SERVER) of
-        undefined ->
-          ok;
-        _ ->
-          global:send(?SERVER, shutdown)
-      end
-  end).
+  server_util:stop(?SERVER),
+  message_store:stop().
   
 send_chat_message (ClientName, MessageBody) ->
   global:send(?SERVER, {send_chat_msg, ClientName, MessageBody}).
@@ -41,10 +26,13 @@ route_messages (Clients) ->
         {ok, ClientPid} ->
           ClientPid ! {printmsg, MessageBody};
         error ->
-          io:format("Error! Unknown client: ~p~n", [ClientName])
+          message_store:save_message(ClientName, MessageBody),
+          io:format("Archived message for ~p~n", [ClientName])
       end,
       route_messages(Clients);
     {register_nick, ClientName, ClientPid} ->
+      Messages = message_store:get_messages(ClientName),
+      lists:foreach(fun(Msg) -> ClientPid ! {printmsg, Msg} end, Messages),
       route_messages(dict:store(ClientName, ClientPid, Clients));
     {unregister_nick, ClientName} ->
       case dict:find(ClientName, Clients) of
