@@ -4,11 +4,11 @@
 
 start () ->
   server_util:start(?SERVER, {message_router, route_messages, [dict:new()]}),
-  message_store:start().
+  message_store:start_link().
 
 stop () ->
   server_util:stop(?SERVER),
-  message_store:stop().
+  message_store:shutdown().
   
 send_chat_message (ClientName, MessageBody) ->
   global:send(?SERVER, {send_chat_msg, ClientName, MessageBody}).
@@ -31,7 +31,7 @@ route_messages (Clients) ->
       end,
       route_messages(Clients);
     {register_nick, ClientName, ClientPid} ->
-      Messages = message_store:get_messages(ClientName),
+      Messages = message_store:find_messages(ClientName),
       lists:foreach(fun(Msg) -> ClientPid ! {printmsg, Msg} end, Messages),
       route_messages(dict:store(ClientName, ClientPid, Clients));
     {unregister_nick, ClientName} ->
