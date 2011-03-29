@@ -21,4 +21,4 @@ handle_messages (Nickname) ->
   end.
 
 start_router () ->
-  message_router:start().
+  message_router:start_link().
