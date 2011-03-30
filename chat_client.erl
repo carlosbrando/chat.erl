@@ -19,6 +19,3 @@ handle_messages (Nickname) ->
     stop ->
       ok
   end.
-
-start_router () ->
-  message_router:start_link().

@@ -1,1 +1,1 @@
-c(message_store). c(server_util). c(chat_client). c(message_router).
+c(message_store). c(server_util). c(chat_client). c(message_router). c(message_router_sup).

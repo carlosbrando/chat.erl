@@ -43,7 +43,7 @@ unregister_nick (ClientName) ->
   gen_server:call({global, ?SERVER}, {unregister_nick, ClientName}).
 
 shutdown () ->
-  gen_server:cast(?SERVER, stop).
+  gen_server:cast({global, ?SERVER}, stop).
 
 %%====================================================================
 %% gen_server callbacks
@@ -58,7 +58,8 @@ shutdown () ->
 %% @end 
 %%--------------------------------------------------------------------
 init([]) ->
-  message_store:start_link(),
+  process_flag(trap_exit, true),
+  io:format("~p (~p) starting...~n", [?MODULE, self()]),
   {ok, dict:new()}.
 
 %%--------------------------------------------------------------------
